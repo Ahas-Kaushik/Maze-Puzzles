@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime Maze Adventure</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+    <style>
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        @keyframes pulse {
+            0% { filter: drop-shadow(0 0 5px rgba(255, 235, 151, 0.7)); }
+            50% { filter: drop-shadow(0 0 15px rgba(255, 235, 151, 1)); }
+            100% { filter: drop-shadow(0 0 5px rgba(255, 235, 151, 0.7)); }
+        }
+        
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px rgba(255, 161, 241, 0.7); }
+            50% { box-shadow: 0 0 15px rgba(255, 161, 241, 1), 0 0 30px rgba(255, 161, 241, 0.5); }
+            100% { box-shadow: 0 0 5px rgba(255, 161, 241, 0.7); }
+        }
+        
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #000428, #004e92);
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 3rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #FFB6C1, #FFA07A, #FFDEAD, #FFFACD);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 2px 8px rgba(255,182,193,0.5));
+        }
+        
+        p {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #f8d8ff;
+            font-size: 1.2rem;
+        }
+        
+        .level-selector {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+        
+        .level-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-weight: bold;
+            position: relative;
+            transition: all 0.3s ease;
+            background: linear-gradient(45deg, #bdc3c7, #2c3e50);
+            color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .level-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        
+        .level-btn.active {
+            background: linear-gradient(45deg, #ff758c, #ff7eb3);
+            transform: scale(1.1);
+        }
+        
+        .level-btn.completed::after {
+            content: "✓";
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #52de97;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .level-info {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .hearts {
+            display: flex;
+            gap: 10px;
+            font-size: 24px;
+            animation: float 3s infinite ease-in-out;
+        }
+        
+        .maze-container {
+            position: relative;
+            margin: 0 auto 30px;
+            max-width: 650px;
+        }
+        
+        .maze {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 5px;
+            width: 600px;
+            height: 600px;
+            margin: 0 auto;
+            position: relative;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 2px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+        }
+        
+        .cell {
+            background-color: #e9ecff;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #3a3a3a;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cell:hover {
+            transform: scale(1.05);
+            z-index: 10;
+            box-shadow: 0 0 15px rgba(255, 192, 203, 0.7);
+        }
+        
+        .start {
+            background: linear-gradient(45deg, #a1ffce, #faffd1);
+            color: #3a3a3a;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        .end {
+            background: linear-gradient(45deg, #ffafbd, #ffc3a0);
+            color: #3a3a3a;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        .correct {
+            background: linear-gradient(45deg, #a1c4fd, #c2e9fb);
+            transform: scale(1.05);
+            z-index: 5;
+            animation: glow 1.5s infinite;
+        }
+        
+        .wrong {
+            background: linear-gradient(45deg, #ffb8b8, #ff919c);
+            animation: shake 0.5s;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            margin: 0 10px;
+        }
+        
+        .btn-pink {
+            background: linear-gradient(45deg, #ff758c, #ff7eb3);
+            color: white;
+        }
+        
+        .btn-pink:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        
+        .btn-blue {
+            background: linear-gradient(45deg, #a1c4fd, #c2e9fb);
+            color: #3a3a3a;
+        }
+        
+        .btn-blue:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        
+        .buttons {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 80%;
+            text-align: center;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+            animation: modalIn 0.5s ease-out forwards;
+        }
+        
+        @keyframes modalIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .password {
+            font-family: monospace;
+            background-color: rgba(255,255,255,0.2);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 10px;
+            font-size: 1.5em;
+            letter-spacing: 2px;
+            color: #fff;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            text-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+            border-radius: 10px;
+            padding: 15px 25px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .toast.success {
+            border-left: 5px solid #52de97;
+        }
+        
+        .toast.error {
+            border-left: 5px solid #ff5e7d;
+        }
+        
+        .character {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            z-index: 100;
+            pointer-events: none;
+        }
+        
+        .character-top-left {
+            top: -40px;
+            left: -40px;
+            transform: rotate(-15deg);
+            animation: float 4s infinite ease-in-out;
+        }
+        
+        .character-top-right {
+            top: -30px;
+            right: -30px;
+            transform: rotate(15deg);
+            animation: float 3.5s infinite ease-in-out;
+        }
+        
+        .character-bottom-left {
+            bottom: -20px;
+            left: -20px;
+            transform: rotate(-5deg);
+            animation: float 4.5s infinite ease-in-out;
+        }
+        
+        .character-bottom-right {
+            bottom: -25px;
+            right: -25px;
+            transform: rotate(10deg);
+            animation: float 5s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Maze Adventure</h1>
+        <p>Find your way through each magical maze! Choose the correct path to unlock all the levels!</p>
+        
+        <div class="level-selector">
+            <div class="level-btn active" data-level="1">1</div>
+            <div class="level-btn" data-level="2">2</div>
+            <div class="level-btn" data-level="3">3</div>
+            <div class="level-btn" data-level="4">4</div>
+            <div class="level-btn" data-level="5">5</div>
+        </div>
+        
+        <div class="game-header">
+            <div class="level-info">Level: <span id="current-level">1</span></div>
+            <div class="hearts">
+                <div class="heart">❤️</div>
+                <div class="heart">❤️</div>
+                <div class="heart">❤️</div>
+            </div>
+        </div>
+        
+        <div class="maze-container">
+            <div class="maze" id="maze"></div>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn btn-blue" id="reset-btn">Reset Path</button>
+            <button class="btn btn-pink" id="next-btn" style="display: none;">Next Level</button>
+        </div>
+        
+        <div class="modal" id="win-modal">
+            <div class="modal-content">
+                <h2 class="text-3xl font-bold mb-4 text-white">Congratulations!</h2>
+                <p style="color: pink; margin-bottom: 20px;">You have completed all the levels and earned the hidden password:</p>
+                <div class="password">*Blade_Runner*</div>
+                <button class="btn btn-blue" id="close-modal">Close</button>
+            </div>
+        </div>
+        
+        <div class="toast" id="toast"></div>
+    </div>
+    
+    <script>
+        // Game state
+        const gameState = {
+            currentLevel: 1,
+            hearts: 3,
+            correctStreak: 0,
+            completedLevels: [false, false, false, false, false],
+            incompleteLevel: null,
+            selectedCells: [],
+            lastSelectedCell: null
+        };
+
+        // Maze patterns for all 5 levels
+        const mazePatterns = [
+            // Level 1 - Simple pattern
+            {
+                start: { row: 0, col: 0 },
+                end: { row: 9, col: 9 },
+                path: [
+                    {row: 0, col: 0}, {row: 0, col: 1}, {row: 0, col: 2}, {row: 0, col: 3}, 
+                    {row: 1, col: 3}, {row: 2, col: 3}, {row: 3, col: 3}, {row: 3, col: 4}, 
+                    {row: 3, col: 5}, {row: 3, col: 6}, {row: 4, col: 6}, {row: 5, col: 6}, 
+                    {row: 6, col: 6}, {row: 6, col: 7}, {row: 6, col: 8}, {row: 7, col: 8}, 
+                    {row: 8, col: 8}, {row: 9, col: 8}, {row: 9, col: 9}
+                ]
+            },
+            // Level 2 - More complex with some turns
+            {
+                start: { row: 5, col: 0 },
+                end: { row: 5, col: 9 },
+                path: [
+                    {row: 5, col: 0}, {row: 4, col: 0}, {row: 3, col: 0}, {row: 2, col: 0},
+                    {row: 2, col: 1}, {row: 2, col: 2}, {row: 2, col: 3}, {row: 2, col: 4},
+                    {row: 3, col: 4}, {row: 4, col: 4}, {row: 5, col: 4}, {row: 6, col: 4},
+                    {row: 7, col: 4}, {row: 7, col: 5}, {row: 7, col: 6}, {row: 7, col: 7},
+                    {row: 6, col: 7}, {row: 5, col: 7}, {row: 5, col: 8}, {row: 5, col: 9}
+                ]
+            },
+            // Level 3 - Winding pattern with surprises
+            {
+                start: { row: 9, col: 0 },
+                end: { row: 0, col: 9 },
+                path: [
+                    {row: 9, col: 0}, {row: 8, col: 0}, {row: 7, col: 0}, {row: 6, col: 0},
+                    {row: 5, col: 0}, {row: 5, col: 1}, {row: 5, col: 2}, {row: 5, col: 3},
+                    {row: 4, col: 3}, {row: 3, col: 3}, {row: 2, col: 3}, {row: 1, col: 3},
+                    {row: 1, col: 4}, {row: 1, col: 5}, {row: 1, col: 6}, {row: 2, col: 6},
+                    {row: 3, col: 6}, {row: 4, col: 6}, {row: 4, col: 7}, {row: 4, col: 8},
+                    {row: 3, col: 8}, {row: 2, col: 8}, {row: 1, col: 8}, {row: 0, col: 8},
+                    {row: 0, col: 9}
+                ]
+            },
+            // Level 4 - Zigzag pattern
+            {
+                start: { row: 0, col: 4 },
+                end: { row: 9, col: 5 },
+                path: [
+                    {row: 0, col: 4}, {row: 1, col: 4}, {row: 2, col: 4}, {row: 3, col: 4},
+                    {row: 3, col: 3}, {row: 3, col: 2}, {row: 4, col: 2}, {row: 5, col: 2},
+                    {row: 6, col: 2}, {row: 6, col: 3}, {row: 6, col: 4}, {row: 6, col: 5},
+                    {row: 5, col: 5}, {row: 4, col: 5}, {row: 4, col: 6}, {row: 4, col: 7},
+                    {row: 5, col: 7}, {row: 6, col: 7}, {row: 7, col: 7}, {row: 8, col: 7},
+                    {row: 8, col: 6}, {row: 8, col: 5}, {row: 9, col: 5}
+                ]
+            },
+            // Level 5 - Complex spiral pattern
+            {
+                start: { row: 4, col: 4 },
+                end: { row: 9, col: 0 },
+                path: [
+                    {row: 4, col: 4}, {row: 4, col: 3}, {row: 4, col: 2}, {row: 3, col: 2},
+                    {row: 2, col: 2}, {row: 2, col: 3}, {row: 2, col: 4}, {row: 2, col: 5},
+                    {row: 2, col: 6}, {row: 3, col: 6}, {row: 4, col: 6}, {row: 5, col: 6},
+                    {row: 6, col: 6}, {row: 6, col: 5}, {row: 6, col: 4}, {row: 6, col: 3},
+                    {row: 6, col: 2}, {row: 6, col: 1}, {row: 6, col: 0}, {row: 7, col: 0},
+                    {row: 8, col: 0}, {row: 9, col: 0}
+                ]
+            }
+        ];
+
+        // DOM references
+        const mazeElement = document.getElementById('maze');
+        const levelButtons = document.querySelectorAll('.level-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const currentLevelSpan = document.getElementById('current-level');
+        const winModal = document.getElementById('win-modal');
+        const closeModalBtn = document.getElementById('close-modal');
+        const toast = document.getElementById('toast');
+
+        // Initialize the game
+        function initGame() {
+            // Set up event listeners
+            levelButtons.forEach(button => {
+                button.addEventListener('click', handleLevelSelection);
+            });
+            
+            resetBtn.addEventListener('click', resetMaze);
+            nextBtn.addEventListener('click', goToNextLevel);
+            closeModalBtn.addEventListener('click', closeModal);
+            
+            // Initial maze render
+            renderMaze();
+        }
+
+        // Handle level button clicks
+        function handleLevelSelection(e) {
+            const level = parseInt(e.target.getAttribute('data-level'));
+            
+            // Only allow clicking on completed levels or the current level
+            if (gameState.completedLevels[level-1] || level === gameState.currentLevel) {
+                // Update active level
+                document.querySelector('.level-btn.active').classList.remove('active');
+                e.target.classList.add('active');
+                
+                // Set current level and render maze
+                gameState.currentLevel = level;
+                gameState.selectedCells = [];
+                gameState.lastSelectedCell = null;
+                currentLevelSpan.textContent = level;
+                
+                nextBtn.style.display = 'none';
+                renderMaze();
+            } else {
+                showToast("Complete previous levels first!", "error");
+            }
+        }
+
+        // Render the maze based on current level
+        function renderMaze() {
+            mazeElement.innerHTML = '';
+            
+            const currentPattern = mazePatterns[gameState.currentLevel - 1];
+            
+            // Reset path tracking for new level
+            gameState.selectedCells = [{
+                row: currentPattern.start.row,
+                col: currentPattern.start.col
+            }];
+            gameState.lastSelectedCell = {
+                row: currentPattern.start.row,
+                col: currentPattern.start.col
+            };
+            
+            // Create cells for the 10x10 grid
+            for (let row = 0; row < 10; row++) {
+                for (let col = 0; col < 10; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    
+                    // Mark start and end points
+                    if (row === currentPattern.start.row && col === currentPattern.start.col) {
+                        cell.classList.add('start');
+                        cell.textContent = 'S';
+                    } else if (row === currentPattern.end.row && col === currentPattern.end.col) {
+                        cell.classList.add('end');
+                        cell.textContent = 'E';
+                    }
+                    
+                    // Add click event
+                    cell.addEventListener('click', handleCellClick);
+                    
+                    mazeElement.appendChild(cell);
+                }
+            }
+            
+            updateHearts();
+        }
+
+        // Handle cell click
+        function handleCellClick(e) {
+            const row = parseInt(e.target.dataset.row);
+            const col = parseInt(e.target.dataset.col);
+            const currentPattern = mazePatterns[gameState.currentLevel - 1];
+            
+            // Skip if clicking on start (already part of path)
+            if (row === currentPattern.start.row && col === currentPattern.start.col) {
+                return;
+            }
+            
+            // Check if this is the end cell
+            if (row === currentPattern.end.row && col === currentPattern.end.col) {
+                const isAdjacent = gameState.lastSelectedCell && 
+                    (Math.abs(row - gameState.lastSelectedCell.row) + Math.abs(col - gameState.lastSelectedCell.col) === 1);
+                
+                if (isAdjacent && gameState.selectedCells.length >= 3) {
+                    e.target.classList.add('correct');
+                    completeMaze();
+                } else {
+                    showToast("Build a path that reaches the end first!", "error");
+                }
+                return;
+            }
+            
+            // Check if cell is in the solution path
+            const isCorrect = currentPattern.path.some(point => point.row === row && point.col === col);
+            
+            // Check if the cell is adjacent to the last selected cell (to ensure continuous path)
+            const isAdjacent = gameState.lastSelectedCell && 
+                (Math.abs(row - gameState.lastSelectedCell.row) + Math.abs(col - gameState.lastSelectedCell.col) === 1);
+            
+            // Skip if cell already selected
+            if (gameState.selectedCells.some(point => point.row === row && point.col === col)) {
+                return;
+            }
+            
+            // Check if cell is both correct and adjacent to the last selected cell
+            if (isCorrect && isAdjacent) {
+                // Handle correct cell
+                e.target.classList.add('correct');
+                
+                // Add cell to selected path
+                gameState.selectedCells.push({row, col});
+                gameState.lastSelectedCell = {row, col};
+                gameState.correctStreak++;
+                
+                // Add a heart if player has 2 correct in a row and hearts == 1
+                if (gameState.correctStreak >= 2 && gameState.hearts === 1) {
+                    gameState.hearts++;
+                    gameState.correctStreak = 0;
+                    updateHearts();
+                    showToast("Great job! You earned a heart!", "success");
+                } else {
+                    showToast("Correct! Keep going!", "success");
+                }
+                
+                // Check if adjacent to end
+                if (isAdjacentToEnd(row, col)) {
+                    showToast("You can now reach the end! Click on E to complete the level.", "success");
+                }
+            } else if (!isAdjacent) {
+                // Not adjacent to last selected cell
+                showToast("You must build a continuous path!", "error");
+            } else {
+                // Adjacent but wrong path
+                e.target.classList.add('wrong');
+                gameState.hearts--;
+                gameState.correctStreak = 0; // Reset streak on wrong move
+                
+                if (gameState.hearts <= 0) {
+                    handleLostAllHearts();
+                } else {
+                    showToast(`Wrong path! You have ${gameState.hearts} hearts left.`, "error");
+                    updateHearts();
+                }
+            }
+        }
+
+        // Check if cell is adjacent to the end
+        function isAdjacentToEnd(row, col) {
+            const currentPattern = mazePatterns[gameState.currentLevel - 1];
+            return Math.abs(row - currentPattern.end.row) + Math.abs(col - currentPattern.end.col) === 1;
+        }
+
+        // Update heart display
+        function updateHearts() {
+            const heartElements = document.querySelectorAll('.heart');
+            
+            heartElements.forEach((heart, index) => {
+                if (index < gameState.hearts) {
+                    heart.innerHTML = '❤️';
+                } else {
+                    heart.innerHTML = '🖤';
+                }
+            });
+        }
+
+        // Handle when player loses all hearts
+        function handleLostAllHearts() {
+            // Store incomplete level info
+            if (!gameState.completedLevels[gameState.currentLevel - 1]) {
+                gameState.incompleteLevel = gameState.currentLevel;
+            }
+            
+            // Find next level to attempt
+            let nextLevel;
+            
+            if (gameState.incompleteLevel !== null) {
+                // Return to the first incomplete level
+                nextLevel = gameState.incompleteLevel;
+                gameState.incompleteLevel = null;
+            } else {
+                // Look for the next uncompleted level
+                nextLevel = gameState.currentLevel + 1;
+                while (nextLevel <= 5 && gameState.completedLevels[nextLevel - 1]) {
+                    nextLevel++;
+                }
+                
+                // If all levels are completed, reset to level 1
+                if (nextLevel > 5) {
+                    nextLevel = 1;
+                }
+            }
+            
+            showToast("Oh no! You lost all hearts! Trying a different level now.", "error");
+            
+            // Reset hearts and switch level
+            gameState.hearts = 3;
+            gameState.currentLevel = nextLevel;
+            gameState.correctStreak = 0;
+            gameState.selectedCells = [];
+            gameState.lastSelectedCell = null;
+            
+            // Update UI
+            currentLevelSpan.textContent = nextLevel.toString();
+            document.querySelector('.level-btn.active').classList.remove('active');
+            document.querySelector(`.level-btn[data-level="${nextLevel}"]`).classList.add('active');
+            
+            updateHearts();
+            renderMaze();
+        }
+
+        // Complete the maze
+        function completeMaze() {
+            // Mark level as completed
+            gameState.completedLevels[gameState.currentLevel - 1] = true;
+            
+            // Update button state
+            document.querySelector(`.level-btn[data-level="${gameState.currentLevel}"]`).classList.add('completed');
+            
+            // Check if all levels are completed
+            if (gameState.completedLevels.every(completed => completed)) {
+                showToast("Amazing! You've completed all levels!", "success");
+                setTimeout(() => {
+                    winModal.style.display = 'flex';
+                }, 1000);
+            } else {
+                // Find next uncompleted level
+                let nextLevel = 1;
+                while (nextLevel <= 5 && gameState.completedLevels[nextLevel - 1]) {
+                    nextLevel++;
+                }
+                
+                // Show next button if there are more levels
+                if (nextLevel <= 5) {
+                    nextBtn.style.display = 'block';
+                    showToast("Level completed! You can now proceed to the next level.", "success");
+                }
+                
+                // Only restore hearts to 3 if they were at 1
+                if (gameState.hearts === 1) {
+                    gameState.hearts = 3;
+                    updateHearts();
+                }
+            }
+        }
+
+        // Reset the current maze
+        function resetMaze() {
+            // Clear all selected cells except the start point
+            const currentPattern = mazePatterns[gameState.currentLevel - 1];
+            
+            gameState.selectedCells = [{
+                row: currentPattern.start.row,
+                col: currentPattern.start.col
+            }];
+            
+            gameState.lastSelectedCell = {
+                row: currentPattern.start.row,
+                col: currentPattern.start.col
+            };
+            
+            // Clear all cell classes except start and end
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                if (!cell.classList.contains('start') && !cell.classList.contains('end')) {
+                    cell.classList.remove('correct', 'wrong');
+                }
+            });
+            
+            showToast("Maze reset! Try again.", "info");
+        }
+
+        // Go to next level
+        function goToNextLevel() {
+            // Find next uncompleted level
+            let nextLevel = gameState.currentLevel + 1;
+            while (nextLevel <= 5 && gameState.completedLevels[nextLevel - 1]) {
+                nextLevel++;
+            }
+            
+            // If all levels are completed or no more levels, stay on current
+            if (nextLevel > 5) {
+                nextLevel = gameState.currentLevel;
+            }
+            
+            // Update level
+            gameState.currentLevel = nextLevel;
+            gameState.selectedCells = [];
+            gameState.lastSelectedCell = null;
+            
+            // Update UI
+            currentLevelSpan.textContent = nextLevel.toString();
+            document.querySelector('.level-btn.active').classList.remove('active');
+            document.querySelector(`.level-btn[data-level="${nextLevel}"]`).classList.add('active');
+            
+            nextBtn.style.display = 'none';
+            renderMaze();
+        }
+
+        // Close win modal
+        function closeModal() {
+            winModal.style.display = 'none';
+        }
+
+        // Show toast message
+        function showToast(message, type = "info") {
+            toast.textContent = message;
+            toast.className = "toast";
+            
+            if (type === "success") {
+                toast.classList.add("success");
+            } else if (type === "error") {
+                toast.classList.add("error");
+            }
+            
+            toast.classList.add("show");
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove("show");
+            }, 3000);
+        }
+
+        // Start the game when page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
